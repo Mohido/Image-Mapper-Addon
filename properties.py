@@ -21,19 +21,29 @@ class ImageFilePathItem(PropertyGroup):
         name="Image File Path",
         subtype='FILE_PATH'
     )
+    recursive_paths: BoolProperty(name="Recursive Search", default=False)
+
+
+class ExpressionItem(PropertyGroup):
+    expression: StringProperty(name="Python Expression: Given Object's suffix (as 'oid' of type integer), return filename. (e.g: f'{oid}.png'")
+
+class NodeLabelItem(PropertyGroup):
+    label: StringProperty(name="Image Texture Label")
 
 class ImageMapperProperties(PropertyGroup):
-    object_name_pattern: StringProperty(name="OName", default="*")
-    general_material: PointerProperty(name="MName", type=Material)
-    image_node_labels: CollectionProperty(name="Image Node Labels", type=ImageFilePathItem)
-    mapping_expression: StringProperty(name="Mapping Expression", default="[]")
+    image_node_labels: CollectionProperty(type=NodeLabelItem)
+    expressions: CollectionProperty(type=ExpressionItem)
+    image_files: CollectionProperty(type=ImageFilePathItem)
+    object_name_pattern: StringProperty(name="Objects Prefix", default="Plane")
+    general_material: PointerProperty(name="Material Template", type=Material)
     nested_node_search: BoolProperty(name="Nested Node Search", default=False)
     cleanup_copied_materials: BoolProperty(name="Cleanup Copied Materials", default=False)
-    image_files: CollectionProperty(type=ImageFilePathItem)
     active_image_file_index: IntProperty(name="Active Image File Index")
 
 def register():
     bpy.utils.register_class(ImageFilePathItem)
+    bpy.utils.register_class(ExpressionItem)
+    bpy.utils.register_class(NodeLabelItem)
     bpy.utils.register_class(ImageMapperProperties)
     bpy.types.Scene.image_mapper_properties = PointerProperty(type=ImageMapperProperties)
 
