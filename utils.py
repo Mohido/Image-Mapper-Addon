@@ -1,3 +1,16 @@
+'''
+    Copy Right Notice
+    =================
+    * This file is part of the Blender Addon "Image Mapper" which is distributed under a EULA License.
+    * Redistribute, resell, or lease of the software is strictly prohibited.
+    * This software is provided "as is" and without any warranty.
+    * Changing or Removing this notice is strictly prohibited.
+    * For full license terms, please visit the following link: <Blender addon marketplace holder>
+    
+    For support, please contact: mohidoart@gmail.com
+    (c) 2024 Mohammed Al-Mahdawi.
+'''
+
 import bpy
 
 # Utility functions that support your operators

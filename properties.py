@@ -1,3 +1,17 @@
+'''
+    Copy Right Notice
+    =================
+    * This file is part of the Blender Addon "Image Mapper" which is distributed under a EULA License.
+    * Redistribute, resell, or lease of the software is strictly prohibited.
+    * This software is provided "as is" and without any warranty.
+    * Changing or Removing this notice is strictly prohibited.
+    * For full license terms, please visit the following link: <Blender addon marketplace holder>
+    
+    For support, please contact: mohidoart@gmail.com
+    (c) 2024 Mohammed Al-Mahdawi.
+'''
+
+
 import bpy
 from bpy.props import (StringProperty, PointerProperty, BoolProperty, CollectionProperty, IntProperty)
 from bpy.types import PropertyGroup, Material
@@ -24,6 +38,6 @@ def register():
     bpy.types.Scene.image_mapper_properties = PointerProperty(type=ImageMapperProperties)
 
 def unregister():
-    del bpy.types.Scene.image_mapper_properties
-    bpy.utils.unregister_class(ImageMapperProperties)
-    bpy.utils.unregister_class(ImageFilePathItem)
+    # Unregister the properties doesn't require class unregistration, but rather just deleting the property from the scene/object/... type.
+    if hasattr(bpy.types.Scene, 'image_mapper_properties'):
+        del bpy.types.Scene.image_mapper_properties
