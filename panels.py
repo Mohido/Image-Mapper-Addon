@@ -41,7 +41,7 @@ class ImageMapperPanel(bpy.types.Panel):
         layout.operator("image_mapper.add_expression", icon='ADD', text="Add Expression")
 
 
-        layout.label(text="Image Node Labels:")
+        layout.label(text="Image Texture Node Labels:")
         labelBox = None
         for i, label in enumerate(props.image_node_labels):
             if(not labelBox):

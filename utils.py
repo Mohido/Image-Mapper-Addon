@@ -12,7 +12,26 @@
 '''
 
 import bpy
-import re
+import os
+import logging
+
+LOG_LEVEL = logging.INFO
+# Create or get the logger
+logger = logging.getLogger(__name__)
+logger.setLevel(LOG_LEVEL)  # Explicitly set the logging level to INFO
+
+# Create a console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(LOG_LEVEL)  # Ensure the handler obeys the INFO level
+
+# Create a formatter and set it on the handler
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                              datefmt='%Y-%m-%d %H:%M:%S')
+console_handler.setFormatter(formatter)
+
+# Add the handler to the logger
+logger.addHandler(console_handler)
+
 
 # Utility functions that support your operators
 
@@ -20,7 +39,7 @@ import re
 # Function to find a node by name, even if nested inside a group
 def find_node_in_group(nodes, name):
     for node in nodes:
-        print(f"Finding node: {name} in {node.label}")
+        logger.debug(f"Finding node: {name} in {node.name}")
         if node.type == 'GROUP':
             # Recursively search in group nodes
             found_node = find_node_in_group(node.node_tree.nodes, name)
@@ -40,8 +59,8 @@ def unbind_materials(material_name_pattern):
             # If the material slot is not empty and the material name matches the pattern
             if slot.material and '.' in slot.material.name and slot.material.name.startswith(material_name_pattern) and slot.material.name.split('.')[1].isdigit():
                 # Clear the material slot
+                logger.debug(f"Unbound material {slot.material.name} from {obj.name}")
                 slot.material = None
-                print(f"Unbound material {slot.name} from {obj.name}")
 
 
 
@@ -52,11 +71,11 @@ def clean_materials(material_name):
     for mat in to_remove:
         # Check if the material is not used by any objects
         if mat.users == 0:
-            print(f"Removing: {mat.name}")
+            logger.debug(f"Removing: {mat.name}")
             # Remove the material
             bpy.data.materials.remove(mat)
         else:
-            print(f"Cannot remove {mat.name}, it is in use.")
+            logger.debug(f"Cannot remove {mat.name}, it is in use.")
 
 
 
@@ -127,13 +146,13 @@ def map_materials(object_pattern, material_ptr, nodes_labels, paths, expressions
 
         # Step 2: Verify and get object index
         if( obj.type != 'MESH' or not obj.name.startswith(object_pattern)):
-            print(f"Skipping Non-Mesh Object: {obj.name}")
+            logger.debug(f"Skipping Non-Mesh Object: {obj.name}")
             continue
-        print(f"Mapping Material For Object: {obj.name}")
+        logger.info(f"Mapping Material For Object: {obj.name}")
         obj_index = int(obj.name.split('.')[-1]) if '.' in obj.name else 0
 
         # Step 2: Creates Material Copy and Insert Slot
-        mat_copy = general_material.copy()
+        mat_copy = material_ptr.copy()
         if not mat_copy.use_nodes:
             raise ValueError("Material should 'use nodes'.")
 
@@ -141,6 +160,7 @@ def map_materials(object_pattern, material_ptr, nodes_labels, paths, expressions
         if not obj.material_slots:
             obj.data.materials.append(None)
 
+        # TODO: Check for the material slots containing a similar material name, and use it, or create a new slot
         # Assign to a new material to the last slot
         obj.material_slots[len(obj.material_slots)-1].material = mat_copy
 

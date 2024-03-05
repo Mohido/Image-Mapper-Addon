@@ -13,7 +13,7 @@
 
 import bpy
 from bpy.props import (IntProperty)
-from utils import unbind_materials, clean_materials
+from utils import unbind_materials, clean_materials, map_materials
 
 class ApplyImageMapping(bpy.types.Operator):
     """Apply Image Mapping based on properties"""
@@ -22,17 +22,38 @@ class ApplyImageMapping(bpy.types.Operator):
 
     def execute(self, context):
         props = context.scene.image_mapper_properties
-        mat_name = props.general_material.name
+        mat = props.general_material
+        obj_name = props.object_name_pattern
         rm_cops = props.cleanup_copied_materials
+
+        node_labels = [x.label for x in props.image_node_labels]
+        expressions = [x.expression for x in props.expressions]
+        paths = [bpy.path.abspath(x.file_path) for x in props.image_files]
 
         self.report({'INFO'}, f"Remove Copies Is Set To: {rm_cops}")
         if(props.cleanup_copied_materials):
-            self.report({'INFO'}, f"Unbinding Copies Of Material: {mat_name}")
-            unbind_materials(mat_name)
+            self.report({'INFO'}, f"Unbinding Copies Of Material: {mat.name}.XXX")
+            unbind_materials(mat.name)
             
-            self.report({'INFO'}, f"Removing Copies Of Material: {mat_name}")
-            clean_materials(mat_name)
+            self.report({'INFO'}, f"Removing Copies Of Material: {mat.name}.XXX")
+            clean_materials(mat.name)
 
+        # # Test Expressions
+        # for prop in props.expressions:
+        #     self.report({'INFO'}, f"Expression: {prop.expression}")
+
+        # # Test Node Labels
+        # for prop in props.image_node_labels:
+        #     self.report({'INFO'}, f"Node Label: {prop.label}")
+        
+        # # Test Image Files
+        # for prop in props.image_files:
+        #     self.report({'INFO'}, f"Image File: {prop.file_path}")
+
+
+        self.report({'INFO'}, f"Applying Image Mapping to Objects with prefix: {obj_name}")
+        map_materials(obj_name, mat, list(node_labels), list(paths), list(expressions))
+        
         # Placeholder for the main logic
         self.report({'INFO'}, "Image Mapping Applied")
         return {'FINISHED'}

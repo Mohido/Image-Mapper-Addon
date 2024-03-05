@@ -26,9 +26,11 @@ import operators, panels, properties
 
 ### NOTE DEBUG STARTS {MOHAMMED}: This is kept for debugging purposes.
 import importlib
+importlib.reload(utils)
 importlib.reload(operators)
 importlib.reload(panels)
 importlib.reload(properties)
+
 ### DEBUG ENDS
 
 def register():
