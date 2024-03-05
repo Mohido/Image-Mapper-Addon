@@ -21,7 +21,7 @@ class ImageFilePathItem(PropertyGroup):
         name="Image File Path",
         subtype='FILE_PATH'
     )
-    recursive_paths: BoolProperty(name="Recursive Search", default=False)
+    deep: BoolProperty(name="Recursive Search", default=False)
 
 
 class ExpressionItem(PropertyGroup):

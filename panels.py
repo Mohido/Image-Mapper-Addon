@@ -57,7 +57,7 @@ class ImageMapperPanel(bpy.types.Panel):
             if(not box):
                 box = layout.box()
             row = box.row()
-            row.prop(image_file, "recursive_paths")
+            row.prop(image_file, "deep", text="Recursive Search")
             row.prop(image_file, "file_path", text="")
             row.operator("image_mapper.remove_image_path", icon='X', text="").index = i
         

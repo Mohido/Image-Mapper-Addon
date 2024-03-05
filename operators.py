@@ -22,39 +22,25 @@ class ApplyImageMapping(bpy.types.Operator):
 
     def execute(self, context):
         props = context.scene.image_mapper_properties
+
+        # Single Values
         mat = props.general_material
         obj_name = props.object_name_pattern
         rm_cops = props.cleanup_copied_materials
-
+        nested_search = props.nested_node_search
+        # Lists
         node_labels = [x.label for x in props.image_node_labels]
         expressions = [x.expression for x in props.expressions]
-        paths = [bpy.path.abspath(x.file_path) for x in props.image_files]
+        paths = [{'path': bpy.path.abspath(x.file_path), 'deep': x.deep} for x in props.image_files]
 
-        self.report({'INFO'}, f"Remove Copies Is Set To: {rm_cops}")
+        # Delete Material Copies
         if(props.cleanup_copied_materials):
-            self.report({'INFO'}, f"Unbinding Copies Of Material: {mat.name}.XXX")
             unbind_materials(mat.name)
-            
-            self.report({'INFO'}, f"Removing Copies Of Material: {mat.name}.XXX")
             clean_materials(mat.name)
-
-        # # Test Expressions
-        # for prop in props.expressions:
-        #     self.report({'INFO'}, f"Expression: {prop.expression}")
-
-        # # Test Node Labels
-        # for prop in props.image_node_labels:
-        #     self.report({'INFO'}, f"Node Label: {prop.label}")
         
-        # # Test Image Files
-        # for prop in props.image_files:
-        #     self.report({'INFO'}, f"Image File: {prop.file_path}")
-
-
-        self.report({'INFO'}, f"Applying Image Mapping to Objects with prefix: {obj_name}")
-        map_materials(obj_name, mat, list(node_labels), list(paths), list(expressions))
+        # Map Materials
+        map_materials(obj_name, mat, node_labels, paths, expressions, nested_search)
         
-        # Placeholder for the main logic
         self.report({'INFO'}, "Image Mapping Applied")
         return {'FINISHED'}
 

@@ -13,36 +13,33 @@
 
 import bpy
 import os
-import logging
 
-LOG_LEVEL = logging.INFO
-# Create or get the logger
-logger = logging.getLogger(__name__)
-logger.setLevel(LOG_LEVEL)  # Explicitly set the logging level to INFO
+LOG_LEVEL = 'INFO'
 
-# Create a console handler
-console_handler = logging.StreamHandler()
-console_handler.setLevel(LOG_LEVEL)  # Ensure the handler obeys the INFO level
+LOG_LEVELS = {
+    'DEBUG': 0,
+    'INFO': 1,
+    'WARNING': 2,
+    'ERROR': 3,
+    'CRITICAL': 4
+}
 
-# Create a formatter and set it on the handler
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                              datefmt='%Y-%m-%d %H:%M:%S')
-console_handler.setFormatter(formatter)
+def log(LEVEL, message):
+    if LOG_LEVELS[LEVEL] >= LOG_LEVELS[LOG_LEVEL]:
+        print(f"utils.py: LOG_LEVEL: {LEVEL} - {message}")
 
-# Add the handler to the logger
-logger.addHandler(console_handler)
 
 
 # Utility functions that support your operators
 
 
 # Function to find a node by name, even if nested inside a group
-def find_node_in_group(nodes, name):
+def find_node_in_group(nodes, name, nested_search=False):
     for node in nodes:
-        logger.debug(f"Finding node: {name} in {node.name}")
-        if node.type == 'GROUP':
+        log('DEBUG', f"Finding node: {name} in {node.name}")
+        if node.type == 'GROUP' and nested_search:
             # Recursively search in group nodes
-            found_node = find_node_in_group(node.node_tree.nodes, name)
+            found_node = find_node_in_group(node.node_tree.nodes, name, nested_search)
             if found_node:
                 return found_node
         elif node.label == name:
@@ -52,6 +49,7 @@ def find_node_in_group(nodes, name):
 
 
 def unbind_materials(material_name_pattern):
+    log('DEBUG', f"Unbinding Copies Of {material_name_pattern}")
     # Iterate over all objects in the scene
     for obj in bpy.data.objects:
         # Check each material slot of the object
@@ -59,23 +57,23 @@ def unbind_materials(material_name_pattern):
             # If the material slot is not empty and the material name matches the pattern
             if slot.material and '.' in slot.material.name and slot.material.name.startswith(material_name_pattern) and slot.material.name.split('.')[1].isdigit():
                 # Clear the material slot
-                logger.debug(f"Unbound material {slot.material.name} from {obj.name}")
+                log('DEBUG', f"Unbound material {slot.material.name} from {obj.name}")
                 slot.material = None
 
 
 
 def clean_materials(material_name): 
     to_remove = [mat for mat in bpy.data.materials if '.' in mat.name and mat.name.startswith(material_name) and mat.name.split('.')[1].isdigit()]
-
+    log('DEBUG', f"Deleting Copies Of {material_name}")
     # Iterate through all materials in the current blend file
     for mat in to_remove:
         # Check if the material is not used by any objects
         if mat.users == 0:
-            logger.debug(f"Removing: {mat.name}")
+            log('DEBUG', f"Removing: {mat.name}")
             # Remove the material
             bpy.data.materials.remove(mat)
         else:
-            logger.debug(f"Cannot remove {mat.name}, it is in use.")
+           log('DEBUG', f"Cannot remove {mat.name}, it is in use.")
 
 
 
@@ -95,15 +93,21 @@ def indexify_paths(paths):
     paths_queue = paths.copy()
 
     while(len(paths_queue) > 0):
-        path = paths_queue.pop(0)
+        top = paths_queue.pop(0)
+        path = top['path']
+        deep = top['deep']
+
         if not os.path.exists(path):
             raise FileNotFoundError(f"Path not found: {path}")
             
         # Check if it is directory
-        if os.path.isdir(path):
+        if os.path.isdir(path) and deep:
             # append the subdirectories to the queue
             for sub in os.listdir(path):
-                paths_queue.append(os.path.join(path, sub))
+                paths_queue.append({
+                    "path": os.path.join(path, sub),
+                    "deep": deep
+                    })
             
         # Check if it is an image file
         elif path.endswith('.png') or path.endswith('.jpg'):
@@ -128,17 +132,24 @@ def evaluate_expression(exp, oid):
     '''   
     return eval(exp) 
 
-def map_materials(object_pattern, material_ptr, nodes_labels, paths, expressions):
+def map_materials(object_pattern, material_ptr, nodes_labels, paths, expressions, nested_search):
     '''
         Create material copies for the objects that match the pattern.
         Assign copies to mesh objects
         Load images, and assign them to material nodes
     '''
-
     # Step 0: Validate the input
     if(len(expressions) > len(nodes_labels)):
         raise ValueError("Expressions length should NOT exceed the length of the nodes labels.")
-
+    elif(len(paths) < 1):
+        log('WARNING', "No paths found to map materials.")
+        return
+    elif(len(nodes_labels) < 1):
+        log('WARNING', "No node labels found to map materials.")
+        return
+    elif(len(expressions) < 1):
+        log('WARNING', "No expression logic found to map materials.")
+        return
 
     # Step 1: Iterate over objects and print names
     indexed_paths = indexify_paths(paths)
@@ -146,9 +157,9 @@ def map_materials(object_pattern, material_ptr, nodes_labels, paths, expressions
 
         # Step 2: Verify and get object index
         if( obj.type != 'MESH' or not obj.name.startswith(object_pattern)):
-            logger.debug(f"Skipping Non-Mesh Object: {obj.name}")
+            log('DEBUG', f"Skipping Non-Mesh Object: {obj.name}")
             continue
-        logger.info(f"Mapping Material For Object: {obj.name}")
+        log('INFO', f"Mapping Material For Object: {obj.name}")
         obj_index = int(obj.name.split('.')[-1]) if '.' in obj.name else 0
 
         # Step 2: Creates Material Copy and Insert Slot
@@ -156,25 +167,35 @@ def map_materials(object_pattern, material_ptr, nodes_labels, paths, expressions
         if not mat_copy.use_nodes:
             raise ValueError("Material should 'use nodes'.")
 
-        # Duplicate the general material and apply to the first material slot
-        if not obj.material_slots:
-            obj.data.materials.append(None)
-
-        # TODO: Check for the material slots containing a similar material name, and use it, or create a new slot
-        # Assign to a new material to the last slot
-        obj.material_slots[len(obj.material_slots)-1].material = mat_copy
-
-
         # Step 3: Assign Images to Material Nodes
         for i, exp in enumerate(expressions):
             # Transform string to python expression
             image_index = evaluate_expression(exp, obj_index)                       # The name of the image file
             image_path = indexed_paths[image_index]                                 # Extract the image path from the indexed paths
-            node = find_node_in_group(mat_copy.node_tree.nodes, nodes_labels[i])    # Find the node in the material nodes
+            node = find_node_in_group(mat_copy.node_tree.nodes, nodes_labels[i], nested_search)    # Find the node in the material nodes
             if not node:
-                raise ValueError(f"Node with label: {label} not found in the material nodes.")
-
+                raise ValueError(f"Node with label: {nodes_labels[i]} not found in the material nodes.")
             node.image = bpy.data.images.load(image_path)
+        
+        # Step 4: Assign the material to the object
+        # Duplicate the general material and apply to the first material slot
+        if not obj.material_slots:
+            obj.data.materials.append(mat_copy)
+            return
+
+        # Searches for first empty slot and assigns the material. If material exists, it will be replaced.
+        assigned = False
+        for slot in obj.material_slots:
+            if not slot.material or slot.material.name.startswith(material_ptr.name):
+                slot.material = mat_copy
+                assigned = True
+                break
+        
+        # Assign to a new material to a new slot
+        if not assigned:
+            obj.data.materials.append(mat_copy)
+
+        log('DEBUG', "\n\n=====================\n\n")
 
 
 
