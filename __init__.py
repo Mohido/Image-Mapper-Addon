@@ -13,15 +13,15 @@
 
 bl_info = {
     "name": "Image Mapper",
-    "blender": (2, 93, 0),
+    "blender": (3, 0, 0),
     "category": "Object",
     "description": "Maps images to materials based on object naming patterns.",
-    "author": "Your Name",
+    "author": "Mohammed Al-Mahdawi - mohidoart@gmail.com",
     "version": (1, 0),
     "location": "View3D > Sidebar > Image Mapper Tab",
 }
 
-import operators, panels, properties
+from . import operators, panels, properties
 
 
 ### NOTE DEBUG STARTS {MOHAMMED}: This is kept for debugging purposes.
