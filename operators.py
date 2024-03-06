@@ -13,7 +13,7 @@
 
 import bpy
 from bpy.props import (IntProperty)
-from utils import unbind_materials, clean_materials, map_materials
+from .utils import unbind_materials, clean_materials, map_materials
 
 class ApplyImageMapping(bpy.types.Operator):
     """Apply Image Mapping based on properties"""
@@ -35,8 +35,8 @@ class ApplyImageMapping(bpy.types.Operator):
 
         # Delete Material Copies
         if(props.cleanup_copied_materials):
-            unbind_materials(mat.name)
-            clean_materials(mat.name)
+            unbind_materials(mat)
+            clean_materials(mat)
         
         # Map Materials
         map_materials(obj_name, mat, node_labels, paths, expressions, nested_search)

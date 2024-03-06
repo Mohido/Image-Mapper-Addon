@@ -35,7 +35,7 @@ class ImageMapperProperties(PropertyGroup):
     expressions: CollectionProperty(type=ExpressionItem)
     image_files: CollectionProperty(type=ImageFilePathItem)
     object_name_pattern: StringProperty(name="Objects Prefix", default="Plane")
-    general_material: PointerProperty(name="Material Template", type=Material)
+    general_material: StringProperty(name="Material Template", default="Material")
     nested_node_search: BoolProperty(name="Nested Node Search", default=False)
     cleanup_copied_materials: BoolProperty(name="Cleanup Copied Materials", default=False)
     active_image_file_index: IntProperty(name="Active Image File Index")

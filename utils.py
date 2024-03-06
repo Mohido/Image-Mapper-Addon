@@ -132,12 +132,32 @@ def evaluate_expression(exp, oid):
     '''   
     return eval(exp) 
 
-def map_materials(object_pattern, material_ptr, nodes_labels, paths, expressions, nested_search):
+
+def find_materials_starting_with(prefix):
+    """
+    Search for materials in the current scene that start with the given prefix.
+
+    Parameters:
+    - prefix (str): The prefix to search for in material names.
+
+    Returns:
+    - A list of material names that start with the given prefix.
+    """
+    for material in bpy.data.materials:
+        if material.name.startswith(prefix) and '.' not in material.name:
+            return material
+    return None
+
+
+def map_materials(object_pattern, material_name, nodes_labels, paths, expressions, nested_search):
     '''
         Create material copies for the objects that match the pattern.
         Assign copies to mesh objects
         Load images, and assign them to material nodes
     '''
+    material_ptr = find_materials_starting_with(material_name)
+    if not material_ptr:
+        raise ValueError(f"Material with prefix: {material_name} not found.")
     # Step 0: Validate the input
     if(len(expressions) > len(nodes_labels)):
         raise ValueError("Expressions length should NOT exceed the length of the nodes labels.")
@@ -152,6 +172,7 @@ def map_materials(object_pattern, material_ptr, nodes_labels, paths, expressions
         return
 
     # Step 1: Iterate over objects and print names
+    
     indexed_paths = indexify_paths(paths)
     for obj in bpy.context.scene.objects:
 
@@ -170,18 +191,21 @@ def map_materials(object_pattern, material_ptr, nodes_labels, paths, expressions
         # Step 3: Assign Images to Material Nodes
         for i, exp in enumerate(expressions):
             # Transform string to python expression
-            image_index = evaluate_expression(exp, obj_index)                       # The name of the image file
-            image_path = indexed_paths[image_index]                                 # Extract the image path from the indexed paths
             node = find_node_in_group(mat_copy.node_tree.nodes, nodes_labels[i], nested_search)    # Find the node in the material nodes
             if not node:
                 raise ValueError(f"Node with label: {nodes_labels[i]} not found in the material nodes.")
-            node.image = bpy.data.images.load(image_path)
+            image_index = evaluate_expression(exp, obj_index)                                   # The name of the image file
+            image_path = indexed_paths.get(image_index, None)                                   # Extract the image path from the indexed paths
+            if image_path:
+                node.image = bpy.data.images.load(image_path)
+            else:
+                log('WARNING', f"File '{image_index}' Can't Be Found")
         
         # Step 4: Assign the material to the object
         # Duplicate the general material and apply to the first material slot
         if not obj.material_slots:
             obj.data.materials.append(mat_copy)
-            return
+            continue
 
         # Searches for first empty slot and assigns the material. If material exists, it will be replaced.
         assigned = False
