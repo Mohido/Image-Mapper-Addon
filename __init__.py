@@ -25,11 +25,11 @@ from . import operators, panels, properties
 
 
 ### NOTE DEBUG STARTS {MOHAMMED}: This is kept for debugging purposes.
-import importlib
-importlib.reload(utils)
-importlib.reload(operators)
-importlib.reload(panels)
-importlib.reload(properties)
+# import importlib
+# importlib.reload(utils)
+# importlib.reload(operators)
+# importlib.reload(panels)
+# importlib.reload(properties)
 
 ### DEBUG ENDS
 
@@ -47,8 +47,8 @@ def unregister():
 if __name__ == "__main__":
 
     ### NOTE DEBUG STARTS {MOHAMMED}: This is kept for debugging purposes.
-    import os
-    os.system('cls')
+    # import os
+    # os.system('cls')
     ### DEBUG ENDS
 
     try:
